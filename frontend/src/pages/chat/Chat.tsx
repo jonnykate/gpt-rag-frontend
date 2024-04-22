@@ -1,10 +1,10 @@
 import { useRef, useState, useEffect } from "react";
-import { Checkbox, Panel, DefaultButton, TextField, SpinButton, Spinner } from "@fluentui/react";
-import { AddRegular, BroomRegular, SparkleFilled, TabDesktopMultipleBottomRegular } from "@fluentui/react-icons";
+import { Checkbox, Panel, DefaultButton, TextField, SpinButton, Spinner, Stack } from "@fluentui/react";
+import { AddRegular, BroomRegular, SparkleFilled, TabDesktopMultipleBottomRegular, ShieldLockRegular } from "@fluentui/react-icons";
 
 import styles from "./Chat.module.css";
 
-import { chatApiGpt, Approaches, AskResponse, ChatRequest, ChatRequestGpt, ChatTurn } from "../../api";
+import { chatApiGpt, Approaches, AskResponse, ChatRequest, ChatRequestGpt, ChatTurn, getUserInfo } from "../../api";
 import { Answer, AnswerError, AnswerLoading } from "../../components/Answer";
 import { QuestionInput } from "../../components/QuestionInput";
 import { ExampleList } from "../../components/Example";
@@ -33,7 +33,6 @@ if (userLanguage.startsWith("pt")) {
 const Chat = () => {
     // speech synthesis is disabled by default
     const speechSynthesisEnabled = false;
-
     const [placeholderText, setPlaceholderText] = useState("");
     const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(false);
     const [promptTemplate, setPromptTemplate] = useState<string>("");
@@ -58,6 +57,9 @@ const Chat = () => {
         setChatIsCleaned,
         chatIsCleaned,
         settingsPanel,
+        authEnabled,
+        showAuthMessage,
+        setShowAuthMessage
     } = useAppContext();
 
     const lastQuestionRef = useRef<string>("");
@@ -187,6 +189,19 @@ const Chat = () => {
         }
     };
 
+    const getUserInfoList = async () => {
+        if (!authEnabled) {
+            setShowAuthMessage(false);
+            return;
+        }
+        const userInfoList = await getUserInfo();
+        if (userInfoList.length === 0 && window.location.hostname !== "127.0.0.1") {
+            setShowAuthMessage(true);
+        } else {
+            setShowAuthMessage(false);
+        }
+    };
+
     /**Get Pdf */
     const getPdf = async (pdfName: string) => {
         /** get file type */
@@ -234,6 +249,10 @@ const Chat = () => {
             setPlaceholderText("Write your question here");
         }
     }, [isLoading, dataConversation]);
+
+    useEffect(() => {
+        if (authEnabled !== undefined) getUserInfoList();
+    }, [authEnabled]);
 
     const onPromptTemplateChange = (_ev?: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, newValue?: string) => {
         setPromptTemplate(newValue || "");
@@ -320,6 +339,37 @@ const Chat = () => {
     const hideTab = () => {
         setActiveAnalysisPanelTab(undefined);
     };
+
+    if (showAuthMessage) {
+        return (
+            <Stack className={styles.chatEmptyState}>
+                <ShieldLockRegular className={styles.chatIcon} style={{ color: "darkorange", height: "200px", width: "200px" }} />
+                <h1 className={styles.chatEmptyStateTitle}>Authentication Not Configured</h1>
+                <h2 className={styles.chatEmptyStateSubtitle}>
+                    This app does not have authentication configured. Please add an identity provider by finding your app in the
+                    <a href="https://portal.azure.com/" target="_blank">
+                        {" "}
+                        Azure Portal{" "}
+                    </a>
+                    and following
+                    <a
+                        href="https://learn.microsoft.com/en-us/azure/app-service/scenario-secure-app-authentication-app-service#3-configure-authentication-and-authorization"
+                        target="_blank"
+                    >
+                        {" "}
+                        these instructions
+                    </a>
+                    .
+                </h2>
+                <h2 className={styles.chatEmptyStateSubtitle} style={{ fontSize: "20px" }}>
+                    <strong>Authentication configuration takes a few minutes to apply. </strong>
+                </h2>
+                <h2 className={styles.chatEmptyStateSubtitle} style={{ fontSize: "20px" }}>
+                    <strong>If you deployed in the last 10 minutes, please wait and reload the page after 10 minutes.</strong>
+                </h2>
+            </Stack>
+        );
+    }
 
     return (
         <div className={styles.mainContainer}>

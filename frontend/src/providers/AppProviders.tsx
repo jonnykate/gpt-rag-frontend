@@ -32,6 +32,9 @@ interface AppContextType {
     setConversationIsLoading: Dispatch<SetStateAction<boolean>>;
     settingsPanel: boolean;
     setSettingsPanel: Dispatch<SetStateAction<boolean>>;
+    authEnabled: boolean;
+    showAuthMessage: boolean;
+    setShowAuthMessage: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -49,6 +52,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [chatIsCleaned, setChatIsCleaned] = useState<boolean>(false);
     const [chatSelected, setChatSelected] = useState("");
     const [settingsPanel, setSettingsPanel] = useState(false);
+    const authEnabled = true;
+    const [showAuthMessage, setShowAuthMessage] = useState<boolean>(false);
 
     return (
         <AppContext.Provider
@@ -76,7 +81,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 chatIsCleaned,
                 setChatIsCleaned,
                 settingsPanel,
-                setSettingsPanel
+                setSettingsPanel,
+                authEnabled,
+                showAuthMessage,
+                setShowAuthMessage
             }}
         >
             {children}
